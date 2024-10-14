@@ -6,6 +6,8 @@ on:
       - main  # This triggers the workflow when a pull request is made to the main branch
   workflow_dispatch:   # Allows you to run this workflow manually from the Actions tab
 
+
+
 jobs:
   update-manifest:
     runs-on: ubuntu-24.04
@@ -24,7 +26,7 @@ jobs:
           NEW_TAG=${GITHUB_SHA}  # Use the commit SHA from the PR merge
           echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
           echo "Building image: $DOCKER_USERNAME/do19:${NEW_TAG}"
-          docker build . -f Dockerfile -t $DOCKER_USERNAME/do19:${NEW_TAG}
+          docker build . -f Dockerfile -t urkoren/do19:${NEW_TAG}
 
 
       # Step 2: Update the Kubernetes manifest with the new image version
