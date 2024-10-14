@@ -29,7 +29,7 @@ jobs:
           NEW_TAG=${GITHUB_SHA}  # Use the commit SHA from the PR merge
 
           # Update the image tag in the deployment file (e.g., deployment.yaml)
-          sed -i "s|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${NEW_TAG}|" ./deploy/deployment.yaml
+          sed -i "s|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${NEW_TAG}|" ./deployment/deployment.yaml
 
       - name: Login to docker hub
         id: docker-hub
