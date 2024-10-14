@@ -19,18 +19,19 @@ jobs:
         id: build-docker-image
         run: |
           ls -la 
-          docker build . -f Dockerfile -t urkoren/simple-java:latest
+          NEW_TAG=${GITHUB_SHA}  # Use the commit SHA from the PR merge
+          echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
+          docker build . -f Dockerfile -t ${{secrets.DOCKERHUB_USERNAME}}/do19:${{ env.NEW_TAG }}
 
       # Step 2: Update the Kubernetes manifest with the new image version
       - name: Update Docker image version in manifest
         run: |
           # Define variables
           IMAGE_NAME=${{secrets.DOCKERHUB_USERNAME}}/do19
-          NEW_TAG=${GITHUB_SHA}  # Use the commit SHA from the PR merge
-          echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
+
 
           # Update the image tag in the deployment file (e.g., deployment.yaml)
-          sed -i "s|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${NEW_TAG}|" ./deployment/deployment.yaml
+          sed -i "s|image: ${IMAGE_NAME}:.*|image: ${{secrets.DOCKERHUB_USERNAME}}/do19:${{ env.NEW_TAG }}|" ./deployment/deployment.yaml
 
       - name: Login to docker hub
         id: docker-hub
