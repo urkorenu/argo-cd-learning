@@ -15,15 +15,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Build the docker image
+        id: build-docker-image
+        run: |
+          ls -la 
+          docker build . -f Dockerfile -t urkoren/simple-java:latest
+
       # Step 2: Update the Kubernetes manifest with the new image version
       - name: Update Docker image version in manifest
         run: |
           # Define variables
-          IMAGE_NAME=urkoren/do19
+          IMAGE_NAME=${{secrets.DOCKERHUB_USERNAME}}/do19
           NEW_TAG=${GITHUB_SHA}  # Use the commit SHA from the PR merge
 
           # Update the image tag in the deployment file (e.g., deployment.yaml)
           sed -i "s|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${NEW_TAG}|" ./deploy/deployment.yaml
+
+      - name: Login to docker hub
+        id: docker-hub
+        env:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_PASSWORD}}
+        run: |
+          docker login -u $username -p $password 
+
+      - name: Push the docker image
+        id: push-docker-image
+        run: docker push ${{secrets.DOCKERHUB_USERNAME}}/simple-java:latest
 
       # Step 3: Commit the changes
       - name: Commit changes
