@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: weather-app
-        image: urkoren:do19:200
+        image: urkoren/do19:200
         ports:
         - containerPort: 5001
         env:
