@@ -61,6 +61,6 @@ jobs:
 
       # Step 4: Push the changes to the main branch
       - name: Push changes
-        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+        # if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
         run: |
           git push "https://${{ secrets.TOKEN_GITHUB }}@github.com/${{ github.repository }}.git" HEAD:main
