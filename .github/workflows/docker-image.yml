@@ -17,11 +17,15 @@ jobs:
 
       - name: Build the docker image
         id: build-docker-image
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}  # Inject secret as env variable
         run: |
-          ls -la 
+          ls -la
           NEW_TAG=${GITHUB_SHA}  # Use the commit SHA from the PR merge
           echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
-          docker build . -f Dockerfile -t ${{secrets.DOCKERHUB_USERNAME}}/do19:${NEW_TAG}
+          echo "Building image: $DOCKER_USERNAME/do19:${NEW_TAG}"
+          docker build . -f Dockerfile -t $DOCKER_USERNAME/do19:${NEW_TAG}
+
 
       # Step 2: Update the Kubernetes manifest with the new image version
       - name: Update Docker image version in manifest
