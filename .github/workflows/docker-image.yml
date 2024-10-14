@@ -41,7 +41,7 @@ jobs:
 
       - name: Push the docker image
         id: push-docker-image
-        run: docker push ${{secrets.DOCKERHUB_USERNAME}}/do19:${NEW_TAG}
+        run: docker push ${{secrets.DOCKERHUB_USERNAME}}/do19:${{ env.NEW_TAG }}
 
       # Step 3: Commit the changes
       - name: Commit changes
