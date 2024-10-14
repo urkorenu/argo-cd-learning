@@ -27,6 +27,7 @@ jobs:
           # Define variables
           IMAGE_NAME=${{secrets.DOCKERHUB_USERNAME}}/do19
           NEW_TAG=${GITHUB_SHA}  # Use the commit SHA from the PR merge
+          echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
 
           # Update the image tag in the deployment file (e.g., deployment.yaml)
           sed -i "s|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${NEW_TAG}|" ./deployment/deployment.yaml
