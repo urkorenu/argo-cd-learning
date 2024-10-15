@@ -1,7 +1,7 @@
 name: Update Kubernetes Manifests
 
 on:
-  pull_request:
+  push:
     branches:
       - main  
   workflow_dispatch:   
@@ -14,34 +14,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Build the Docker image
-      - name: Build the Docker image
-        id: build-docker-image
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        run: |
-          NEW_TAG=${GITHUB_SHA}  # Use the commit SHA for the new image tag
-          echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
-          echo "Building image: $DOCKER_USERNAME/do19:${NEW_TAG}"
-          docker build . -f Dockerfile -t $DOCKER_USERNAME/do19:${NEW_TAG}
-
       # Step 3: Update the Kubernetes manifest with the new image version
       - name: Update Docker image version in manifest
         run: |
           IMAGE_NAME=urkoren/do19
           sed -i "s|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${{ env.NEW_TAG }}|" ./deployment/deployment.yaml
-
-      # Step 4: Login to Docker Hub
-      - name: Login to Docker Hub
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-        run: |
-          echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
-
-      # Step 5: Push the Docker image
-      - name: Push the Docker image
-        run: docker push $DOCKER_USERNAME/do19:${{ env.NEW_TAG }}
 
       # Step 6: Commit changes to the manifest
       - name: Commit changes
@@ -53,6 +30,5 @@ jobs:
 
       # Step 7: Push changes to the main branch
       - name: Push changes
-        if: github.event.pull_request.merged == true
         run: |
           git push "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:main
