@@ -3,11 +3,8 @@ name: Update Kubernetes Manifests
 on:
   pull_request:
     branches:
-      - main  # This triggers the workflow when a pull request is made to the main branch
-  workflow_dispatch:   # Allows you to run this workflow manually from the Actions tab
-
-
-
+      - main  
+  workflow_dispatch:   
 jobs:
   update-manifest:
     runs-on: ubuntu-24.04
@@ -17,50 +14,45 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build the docker image
+      # Step 2: Build the Docker image
+      - name: Build the Docker image
         id: build-docker-image
         env:
-          DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}  # Inject secret as env variable
+          DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          ls -la
-          NEW_TAG=${GITHUB_SHA}  # Use the commit SHA from the PR merge
+          NEW_TAG=${GITHUB_SHA}  # Use the commit SHA for the new image tag
           echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
           echo "Building image: $DOCKER_USERNAME/do19:${NEW_TAG}"
-          docker build . -f Dockerfile -t urkoren/do19:${NEW_TAG}
+          docker build . -f Dockerfile -t $DOCKER_USERNAME/do19:${NEW_TAG}
 
-
-      # Step 2: Update the Kubernetes manifest with the new image version
+      # Step 3: Update the Kubernetes manifest with the new image version
       - name: Update Docker image version in manifest
         run: |
-          # Define variables
           IMAGE_NAME=urkoren/do19
+          sed -i "s|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${{ env.NEW_TAG }}|" ./deployment/deployment.yaml
 
-
-          # Update the image tag in the deployment file (e.g., deployment.yaml)
-          sed -i "s|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}/do19:${{ env.NEW_TAG }}|" ./deployment/deployment.yaml
-
-      - name: Login to docker hub
-        id: docker-hub
+      # Step 4: Login to Docker Hub
+      - name: Login to Docker Hub
         env:
-          username: ${{secrets.DOCKERHUB_USERNAME}}
-          password: ${{secrets.DOCKERHUB_PASSWORD}}
+          DOCKER_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
         run: |
-          docker login -u $username -p $password 
+          echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
 
-      - name: Push the docker image
-        id: push-docker-image
-        run: docker push urkoren/do19:${{ env.NEW_TAG }}
+      # Step 5: Push the Docker image
+      - name: Push the Docker image
+        run: docker push $DOCKER_USERNAME/do19:${{ env.NEW_TAG }}
 
-      # Step 3: Commit the changes
+      # Step 6: Commit changes to the manifest
       - name: Commit changes
         run: |
           git config --global user.email "ork14790@gmail.com"
-          git config --global user.name "github runner"
+          git config --global user.name "GitHub Actions"
           git add ./deployment/deployment.yaml
           git commit -m "Update image version to ${NEW_TAG}" || echo "No changes to commit"
 
-      # Step 4: Push the changes to the main branch
+      # Step 7: Push changes to the main branch
       - name: Push changes
-        # if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+        if: github.event.pull_request.merged == true
         run: |
-          git push "https://${{ secrets.TOKEN_GITHUB }}@github.com/${{ github.repository }}.git" HEAD:main
+          git push "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" HEAD:main
